@@ -22,7 +22,9 @@ const Login = () => {
             await login(username, password);
             navigate('/');
         } catch (err) {
-            setError(err.response?.data?.error || 'Authentication failed. Please try again.');
+            console.error('Login/Register error details:', err);
+            const msg = err.response?.data?.error || err.message || 'Authentication failed. Please try again.';
+            setError(`${msg} (Debug: ${err.message})`);
         }
     };
 
