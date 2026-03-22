@@ -9,7 +9,7 @@ const EmployeeManager = () => {
     const [formData, setFormData] = useState({ id: null, name: '', role: '', shift: 'Day', base_salary: 0, overtime_rate: 0 });
 
     const fetchEmployees = async () => {
-        const res = await axios.get('http://localhost:5000/api/employees');
+        const res = await axios.get('https://premium-attendance.onrender.com/api/employees');
         setEmployees(res.data);
     };
 
@@ -20,9 +20,9 @@ const EmployeeManager = () => {
     const handleSave = async (e) => {
         e.preventDefault();
         if (formData.id) {
-            await axios.put(`http://localhost:5000/api/employees/${formData.id}`, formData);
+            await axios.put(`https://premium-attendance.onrender.com/api/employees/${formData.id}`, formData);
         } else {
-            await axios.post('http://localhost:5000/api/employees', formData);
+            await axios.post('https://premium-attendance.onrender.com/api/employees', formData);
         }
         setShowModal(false);
         fetchEmployees();
@@ -30,7 +30,7 @@ const EmployeeManager = () => {
 
     const handleDelete = async (id) => {
         if (confirm('Delete this employee?')) {
-            await axios.delete(`http://localhost:5000/api/employees/${id}`);
+            await axios.delete(`https://premium-attendance.onrender.com/api/employees/${id}`);
             fetchEmployees();
         }
     };

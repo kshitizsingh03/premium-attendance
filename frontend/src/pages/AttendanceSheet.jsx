@@ -23,10 +23,10 @@ const AttendanceSheet = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            const empRes = await axios.get('http://localhost:5000/api/employees');
+            const empRes = await axios.get('https://premium-attendance.onrender.com/api/employees');
             setEmployees(empRes.data);
 
-            const attRes = await axios.get(`http://localhost:5000/api/attendance?month=${currentMonth}`);
+            const attRes = await axios.get(`https://premium-attendance.onrender.com/api/attendance?month=${currentMonth}`);
             const attMap = {};
             attRes.data.forEach(record => {
                 if (!attMap[record.employee_id]) attMap[record.employee_id] = {};
@@ -70,7 +70,7 @@ const AttendanceSheet = () => {
                 Object.keys(attendance[empId]).forEach(date => {
                     const record = attendance[empId][date];
                     if (record.status) {
-                        promises.push(axios.post('http://localhost:5000/api/attendance', {
+                        promises.push(axios.post('https://premium-attendance.onrender.com/api/attendance', {
                             employee_id: empId,
                             date,
                             status: record.status,

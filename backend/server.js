@@ -38,6 +38,19 @@ const logAudit = async (action, details) => {
 };
 
 // --- AUTHENTICATION ---
+app.post('/api/auth/register', async (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+    try {
+        const hash = bcrypt.hashSync(password, 10);
+        await Admin.create({ username, password: hash });
+        res.json({ success: true });
+    } catch (error) {
+        if (error.code === 11000) return res.status(400).json({ error: 'Username already exists' });
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body;
     try {

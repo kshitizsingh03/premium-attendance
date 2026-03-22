@@ -7,7 +7,6 @@ const connectDB = async () => {
         const uri = process.env.MONGO_URI || 'mongodb://localhost:27017/premium_attendance';
         await mongoose.connect(uri);
         console.log('✅ MongoDB Connected');
-        await initializeAdmin();
     } catch (err) {
         console.error('❌ MongoDB connection error:', err);
         process.exit(1);
@@ -19,16 +18,6 @@ const adminSchema = new mongoose.Schema({
     password: { type: String, required: true }
 });
 const Admin = mongoose.model('Admin', adminSchema);
-
-// Admin initialization
-const initializeAdmin = async () => {
-    const adminExists = await Admin.findOne({ username: 'admin' });
-    if (!adminExists) {
-        const hash = bcrypt.hashSync('admin123', 10);
-        await Admin.create({ username: 'admin', password: hash });
-        console.log('✅ Default admin created');
-    }
-};
 
 const employeeSchema = new mongoose.Schema({
     name: { type: String, required: true },

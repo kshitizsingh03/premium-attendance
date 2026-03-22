@@ -13,7 +13,7 @@ const SalaryManager = () => {
         const fetchSalaries = async () => {
             setLoading(true);
             try {
-                const res = await axios.get(`http://localhost:5000/api/salary?month=${currentMonth}`);
+                const res = await axios.get(`https://premium-attendance.onrender.com/api/salary?month=${currentMonth}`);
                 setSalaries(res.data);
             } catch (err) {
                 console.error(err);

@@ -25,7 +25,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchSummary = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/dashboard/summary');
+                const res = await axios.get('https://premium-attendance.onrender.com/api/dashboard/summary');
                 setSummary(res.data);
             } catch (err) {
                 console.error(err);
