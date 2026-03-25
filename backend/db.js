@@ -32,6 +32,8 @@ const attendanceSchema = new mongoose.Schema({
     employee_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', required: true },
     date: { type: String, required: true }, // YYYY-MM-DD
     status: { type: String, required: true, enum: ['P', 'A', 'L'] },
+    in_time: { type: String, default: '' },
+    out_time: { type: String, default: '' },
     overtime_hours: { type: Number, default: 0 }
 });
 attendanceSchema.index({ employee_id: 1, date: 1 }, { unique: true });

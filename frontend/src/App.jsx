@@ -7,10 +7,11 @@ import Dashboard from './pages/Dashboard';
 import AttendanceSheet from './pages/AttendanceSheet';
 import SalaryManager from './pages/SalaryManager';
 import EmployeeManager from './pages/EmployeeManager';
+import ShiftSelection from './pages/ShiftSelection';
 
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useContext(AuthContext);
-    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (loading) return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
     return user ? children : <Navigate to="/login" />;
 };
 
@@ -19,6 +20,7 @@ function App() {
         <Router>
             <Routes>
                 <Route path="/login" element={<Login />} />
+                <Route path="/select-shift" element={<ProtectedRoute><ShiftSelection /></ProtectedRoute>} />
                 <Route path="/" element={
                     <ProtectedRoute>
                         <DashboardLayout />

@@ -37,6 +37,32 @@ const logAudit = async (action, details) => {
     }
 };
 
+const calculateOvertime = (in_time, out_time) => {
+    if (!in_time || !out_time) return 0;
+    
+    const [inHours, inMins] = in_time.split(':').map(Number);
+    const [outHours, outMins] = out_time.split(':').map(Number);
+    
+    let overtime = 0;
+    
+    // Day Shift standard: 08:00 to 17:00
+    const standardIn = 8 * 60; // 08:00 in minutes
+    const standardOut = 17 * 60; // 17:00 in minutes
+    
+    const actualIn = inHours * 60 + inMins;
+    const actualOut = outHours * 60 + outMins;
+    
+    if (actualIn < standardIn) {
+        overtime += (standardIn - actualIn) / 60;
+    }
+    
+    if (actualOut > standardOut) {
+        overtime += (actualOut - standardOut) / 60;
+    }
+    
+    return Math.max(0, parseFloat(overtime.toFixed(2)));
+};
+
 // --- AUTHENTICATION ---
 app.post('/api/auth/register', async (req, res) => {
     const { username, password } = req.body;
@@ -128,17 +154,26 @@ app.get('/api/attendance', async (req, res) => {
 });
 
 app.post('/api/attendance', async (req, res) => {
-    const { employee_id, date, status, overtime_hours } = req.body;
-    if (overtime_hours < 0) return res.status(400).json({ error: 'Overtime cannot be negative' });
+    const { employee_id, date, status, in_time, out_time } = req.body;
+    
+    let overtime_hours = 0;
+    if (status === 'P') {
+        overtime_hours = calculateOvertime(in_time, out_time);
+    }
 
     try {
         await Attendance.findOneAndUpdate(
             { employee_id, date },
-            { status, overtime_hours: overtime_hours || 0 },
+            { 
+                status, 
+                in_time: in_time || '', 
+                out_time: out_time || '', 
+                overtime_hours 
+            },
             { upsert: true, new: true }
         );
-        logAudit('UPDATE_ATTENDANCE', { employee_id, date, status, overtime_hours });
-        res.json({ success: true });
+        logAudit('UPDATE_ATTENDANCE', { employee_id, date, status, in_time, out_time, overtime_hours });
+        res.json({ success: true, overtime_hours });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

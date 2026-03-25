@@ -20,7 +20,7 @@ const Login = () => {
                 await axios.post('https://premium-attendance.onrender.com/api/auth/register', { username, password });
             }
             await login(username, password);
-            navigate('/');
+            navigate('/select-shift');
         } catch (err) {
             console.error('Login/Register error details:', err);
             const msg = err.response?.data?.error || err.message || 'Authentication failed. Please try again.';

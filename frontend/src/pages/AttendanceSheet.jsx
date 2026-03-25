@@ -32,6 +32,8 @@ const AttendanceSheet = () => {
                 if (!attMap[record.employee_id]) attMap[record.employee_id] = {};
                 attMap[record.employee_id][record.date] = {
                     status: record.status,
+                    in_time: record.in_time || '',
+                    out_time: record.out_time || '',
                     overtime_hours: record.overtime_hours
                 };
             });
@@ -45,19 +47,17 @@ const AttendanceSheet = () => {
             ...prev,
             [empId]: {
                 ...prev[empId],
-                [date]: { ...(prev[empId]?.[date] || { overtime_hours: 0 }), status }
+                [date]: { ...(prev[empId]?.[date] || { in_time: '', out_time: '', overtime_hours: 0 }), status }
             }
         }));
     };
 
-    const handleOvertimeChange = (empId, date, hours) => {
-        const val = parseFloat(hours) || 0;
-        if (val < 0) return; // Prevent negative
+    const handleTimeChange = (empId, date, field, value) => {
         setAttendance(prev => ({
             ...prev,
             [empId]: {
                 ...prev[empId],
-                [date]: { ...(prev[empId]?.[date] || { status: 'P' }), overtime_hours: val }
+                [date]: { ...(prev[empId]?.[date] || { status: 'P' }), [field]: value }
             }
         }));
     };
@@ -74,13 +74,27 @@ const AttendanceSheet = () => {
                             employee_id: empId,
                             date,
                             status: record.status,
-                            overtime_hours: record.overtime_hours
+                            in_time: record.in_time,
+                            out_time: record.out_time
                         }));
                     }
                 });
             });
             await Promise.all(promises);
-            alert('Saved successfully!');
+            alert('Saved successfully! Overtime has been calculated based on shift timings (08:00 AM - 05:00 PM).');
+            // Refresh to show calculated overtime
+            const attRes = await axios.get(`https://premium-attendance.onrender.com/api/attendance?month=${currentMonth}`);
+            const attMap = {};
+            attRes.data.forEach(record => {
+                if (!attMap[record.employee_id]) attMap[record.employee_id] = {};
+                attMap[record.employee_id][record.date] = {
+                    status: record.status,
+                    in_time: record.in_time || '',
+                    out_time: record.out_time || '',
+                    overtime_hours: record.overtime_hours
+                };
+            });
+            setAttendance(attMap);
         } catch (e) {
             alert('Error saving data');
         } finally {
@@ -88,14 +102,20 @@ const AttendanceSheet = () => {
         }
     };
 
-    const filteredEmployees = employees.filter(e => e.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const selectedShift = localStorage.getItem('selected_shift') || 'Day';
+    const filteredEmployees = employees.filter(e => 
+        e.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
+        (e.shift === selectedShift || !e.shift)
+    );
 
     return (
         <div className="space-y-6">
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">Attendance Sheet</h1>
-                    <p className="text-slate-400 mt-2">Manage daily attendance and overtime.</p>
+                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                        {selectedShift} Shift Attendance
+                    </h1>
+                    <p className="text-slate-400 mt-2">Manual time entry for {selectedShift} shift (8 AM - 5 PM standard).</p>
                 </div>
                 <div className="flex items-center space-x-4">
                     <input 
@@ -140,12 +160,12 @@ const AttendanceSheet = () => {
                         <tbody>
                             {filteredEmployees.map(emp => (
                                 <tr key={emp.id} className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors">
-                                    <td className="p-2 sticky left-0 bg-slate-900 z-10 font-medium shadow-[4px_0_10px_rgba(0,0,0,0.5)] flex flex-col justify-center min-h-[60px]">
+                                    <td className="p-2 sticky left-0 bg-slate-900 z-10 font-medium shadow-[4px_0_10px_rgba(0,0,0,0.5)] flex flex-col justify-center min-h-[100px]">
                                         {emp.name}
-                                        <div className="text-xs text-slate-500">{emp.shift} Shift</div>
+                                        <div className="text-xs text-slate-500">Base: ${emp.base_salary}</div>
                                     </td>
                                     {days.map(d => {
-                                        const record = attendance[emp.id]?.[d.dateStr] || { status: '', overtime_hours: 0 };
+                                        const record = attendance[emp.id]?.[d.dateStr] || { status: '', in_time: '', out_time: '', overtime_hours: 0 };
                                         
                                         let statusColor = 'bg-slate-800 text-slate-300 border-slate-700';
                                         if (record.status === 'P') statusColor = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50';
@@ -153,10 +173,10 @@ const AttendanceSheet = () => {
                                         if (record.status === 'L') statusColor = 'bg-amber-500/20 text-amber-400 border-amber-500/50';
 
                                         return (
-                                            <td key={d.dayNum} className={`p-1 min-w-[80px] ${d.isToday ? 'bg-blue-500/5 border-x border-blue-500/20' : ''}`}>
+                                            <td key={d.dayNum} className={`p-1 min-w-[100px] ${d.isToday ? 'bg-blue-500/5 border-x border-blue-500/20' : ''}`}>
                                                 <div className="flex flex-col space-y-1">
                                                     <select 
-                                                        className={`text-xs p-1 rounded border outline-none cursor-pointer text-center appearance-none ${statusColor}`}
+                                                        className={`text-[10px] p-1 rounded border outline-none cursor-pointer text-center appearance-none ${statusColor}`}
                                                         value={record.status}
                                                         onChange={(e) => handleStatusChange(emp.id, d.dateStr, e.target.value)}
                                                     >
@@ -165,16 +185,31 @@ const AttendanceSheet = () => {
                                                         <option value="A">A</option>
                                                         <option value="L">L</option>
                                                     </select>
-                                                    <input 
-                                                        type="number" 
-                                                        step="0.5" 
-                                                        min="0"
-                                                        placeholder="OT hrs"
-                                                        className="text-xs p-1 rounded bg-slate-900 border border-slate-700 text-center focus:border-purple-500 focus:outline-none placeholder-slate-600 disabled:opacity-50"
-                                                        value={record.overtime_hours || ''}
-                                                        onChange={(e) => handleOvertimeChange(emp.id, d.dateStr, e.target.value)}
-                                                        disabled={!record.status || record.status === 'A' || record.status === 'L'}
-                                                    />
+                                                    {record.status === 'P' && (
+                                                        <>
+                                                            <div className="flex flex-col space-y-1 mt-1">
+                                                                <input 
+                                                                    type="time" 
+                                                                    className="text-[10px] p-1 rounded bg-slate-900 border border-slate-700 text-center focus:border-blue-500 focus:outline-none"
+                                                                    value={record.in_time || ''}
+                                                                    onChange={(e) => handleTimeChange(emp.id, d.dateStr, 'in_time', e.target.value)}
+                                                                    title="In Time"
+                                                                />
+                                                                <input 
+                                                                    type="time" 
+                                                                    className="text-[10px] p-1 rounded bg-slate-900 border border-slate-700 text-center focus:border-purple-500 focus:outline-none"
+                                                                    value={record.out_time || ''}
+                                                                    onChange={(e) => handleTimeChange(emp.id, d.dateStr, 'out_time', e.target.value)}
+                                                                    title="Out Time"
+                                                                />
+                                                            </div>
+                                                            {record.overtime_hours > 0 && (
+                                                                <div className="text-[9px] text-center text-orange-400 font-bold">
+                                                                    OT: {record.overtime_hours}h
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    )}
                                                 </div>
                                             </td>
                                         );
