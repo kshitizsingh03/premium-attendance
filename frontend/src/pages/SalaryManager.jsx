@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { api } from '../context/AuthContext';
 import { format } from 'date-fns';
 import { Search, IndianRupee, Download } from 'lucide-react';
 
@@ -13,7 +13,7 @@ const SalaryManager = () => {
         const fetchSalaries = async () => {
             setLoading(true);
             try {
-                const res = await axios.get(`https://premium-attendance.onrender.com/api/salary?month=${currentMonth}`);
+                const res = await api.get(`/api/salary?month=${currentMonth}`);
                 setSalaries(res.data);
             } catch (err) {
                 console.error(err);
@@ -30,7 +30,7 @@ const SalaryManager = () => {
         try {
             const emp = salaries.find(s => s.id === id);
             const updatedData = { ...emp, [field]: parseFloat(value) || 0 };
-            await axios.put(`https://premium-attendance.onrender.com/api/employees/${id}`, updatedData);
+            await api.put(`/api/employees/${id}`, updatedData);
             
             // Update local state to reflect changes and recalculate total
             setSalaries(prev => prev.map(s => {

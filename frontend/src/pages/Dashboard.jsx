@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { api } from '../context/AuthContext';
 import { Users, UserCheck, Clock } from 'lucide-react';
 
 const StatCard = ({ title, value, icon: Icon, color }) => (
@@ -26,7 +26,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchSummary = async () => {
             try {
-                const res = await axios.get('https://premium-attendance.onrender.com/api/dashboard/summary');
+                const res = await api.get('/api/dashboard/summary');
                 setSummary(res.data);
             } catch (err) {
                 console.error(err);

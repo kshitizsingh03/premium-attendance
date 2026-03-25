@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { api } from '../context/AuthContext';
 import { UserPlus, Search, Edit2, Trash2, X } from 'lucide-react';
 
 const EmployeeManager = () => {
@@ -9,7 +9,7 @@ const EmployeeManager = () => {
     const [formData, setFormData] = useState({ id: null, name: '', role: '', shift: 'Day', base_salary: 0, overtime_rate: 0 });
 
     const fetchEmployees = async () => {
-        const res = await axios.get('https://premium-attendance.onrender.com/api/employees');
+        const res = await api.get('/api/employees');
         setEmployees(res.data);
     };
 
@@ -21,9 +21,9 @@ const EmployeeManager = () => {
         e.preventDefault();
         try {
             if (formData.id) {
-                await axios.put(`https://premium-attendance.onrender.com/api/employees/${formData.id}`, formData);
+                await api.put(`/api/employees/${formData.id}`, formData);
             } else {
-                await axios.post('https://premium-attendance.onrender.com/api/employees', formData);
+                await api.post('/api/employees', formData);
             }
             setShowModal(false);
             fetchEmployees();
@@ -36,7 +36,7 @@ const EmployeeManager = () => {
 
     const handleDelete = async (id) => {
         if (confirm('Delete this employee?')) {
-            await axios.delete(`https://premium-attendance.onrender.com/api/employees/${id}`);
+            await api.delete(`/api/employees/${id}`);
             fetchEmployees();
         }
     };

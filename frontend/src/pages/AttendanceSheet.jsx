@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { api } from '../context/AuthContext';
 import { getDaysInMonth, format, startOfMonth, addDays } from 'date-fns';
 import { Search, Save } from 'lucide-react';
 
@@ -24,10 +24,10 @@ const AttendanceSheet = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            const empRes = await axios.get('https://premium-attendance.onrender.com/api/employees');
+            const empRes = await api.get('/api/employees');
             setEmployees(empRes.data);
 
-            const attRes = await axios.get(`https://premium-attendance.onrender.com/api/attendance?month=${currentMonth}`);
+            const attRes = await api.get(`/api/attendance?month=${currentMonth}`);
             const attMap = {};
             attRes.data.forEach(record => {
                 if (!attMap[record.employee_id]) attMap[record.employee_id] = {};
@@ -71,7 +71,7 @@ const AttendanceSheet = () => {
                 Object.keys(attendance[empId]).forEach(date => {
                     const record = attendance[empId][date];
                     if (record.status) {
-                        promises.push(axios.post('https://premium-attendance.onrender.com/api/attendance', {
+                        promises.push(api.post('/api/attendance', {
                             employee_id: empId,
                             date,
                             status: record.status,
@@ -86,7 +86,7 @@ const AttendanceSheet = () => {
             const timingDesc = selectedShift === 'Day' ? '08:00 AM - 05:00 PM' : '08:00 PM - 05:00 AM';
             alert(`Saved successfully! Overtime calculated based on ${selectedShift} shift timings (${timingDesc}).`);
             // Refresh to show calculated overtime
-            const attRes = await axios.get(`https://premium-attendance.onrender.com/api/attendance?month=${currentMonth}`);
+            const attRes = await api.get(`/api/attendance?month=${currentMonth}`);
             const attMap = {};
             attRes.data.forEach(record => {
                 if (!attMap[record.employee_id]) attMap[record.employee_id] = {};
