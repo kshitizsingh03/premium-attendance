@@ -19,13 +19,19 @@ const EmployeeManager = () => {
 
     const handleSave = async (e) => {
         e.preventDefault();
-        if (formData.id) {
-            await axios.put(`https://premium-attendance.onrender.com/api/employees/${formData.id}`, formData);
-        } else {
-            await axios.post('https://premium-attendance.onrender.com/api/employees', formData);
+        try {
+            if (formData.id) {
+                await axios.put(`https://premium-attendance.onrender.com/api/employees/${formData.id}`, formData);
+            } else {
+                await axios.post('https://premium-attendance.onrender.com/api/employees', formData);
+            }
+            setShowModal(false);
+            fetchEmployees();
+            alert('Employee saved successfully!');
+        } catch (err) {
+            console.error(err);
+            alert('Failed to save employee: ' + (err.response?.data?.error || err.message));
         }
-        setShowModal(false);
-        fetchEmployees();
     };
 
     const handleDelete = async (id) => {

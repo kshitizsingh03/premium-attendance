@@ -21,6 +21,7 @@ const StatCard = ({ title, value, icon: Icon, color }) => (
 
 const Dashboard = () => {
     const [summary, setSummary] = useState(null);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchSummary = async () => {
@@ -29,12 +30,23 @@ const Dashboard = () => {
                 setSummary(res.data);
             } catch (err) {
                 console.error(err);
+                setError(err.response?.data?.error || err.message || 'Can not connect to backend server.');
             }
         };
         fetchSummary();
     }, []);
 
-    if (!summary) return <div className="animate-pulse">Loading dashboard...</div>;
+    if (error) {
+        return (
+            <div className="glass-panel p-8 text-center space-y-4">
+                <div className="text-red-400 font-bold text-xl">⚠️ Backend Connection Error</div>
+                <p className="text-slate-400">{error}</p>
+                <button onClick={() => window.location.reload()} className="premium-btn px-6 py-2 bg-slate-800">Retry Now</button>
+            </div>
+        )
+    }
+
+    if (!summary) return <div className="animate-pulse flex items-center justify-center p-20 font-bold text-white">Loading dashboard system...</div>;
 
     return (
         <div className="space-y-8 animate-fade-in" style={{ animation: 'fadeIn 0.5s ease-out' }}>

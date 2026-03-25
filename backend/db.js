@@ -6,10 +6,15 @@ const connectDB = async () => {
     try {
         const uri = process.env.MONGO_URI || 'mongodb://localhost:27017/premium_attendance';
         await mongoose.connect(uri);
-        console.log('✅ MongoDB Connected');
+        console.log('✅ MongoDB Connected Successfully');
     } catch (err) {
-        console.error('❌ MongoDB connection error:', err);
-        process.exit(1);
+        if (err.message.includes('authentication failed')) {
+            console.error('❌ MONGODB AUTHENTICATION FAILED. Please check your password in the .env file.');
+        } else {
+            console.error('❌ MongoDB connection error:', err.message);
+        }
+        // Instead of exiting, we'll let it stay running but requests will fail.
+        // This is better for Render which often monitors simple health checks.
     }
 };
 
