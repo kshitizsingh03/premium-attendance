@@ -37,27 +37,47 @@ const logAudit = async (action, details) => {
     }
 };
 
-const calculateOvertime = (in_time, out_time) => {
+const calculateOvertime = (in_time, out_time, shift = 'Day') => {
     if (!in_time || !out_time) return 0;
     
-    const [inHours, inMins] = in_time.split(':').map(Number);
-    const [outHours, outMins] = out_time.split(':').map(Number);
+    // Convert time strings (HH:mm) to minutes from midnight
+    const toMinutes = (time) => {
+        const [h, m] = time.split(':').map(Number);
+        return h * 60 + m;
+    };
+
+    const actualIn = toMinutes(in_time);
+    const actualOut = toMinutes(out_time);
     
     let overtime = 0;
-    
-    // Day Shift standard: 08:00 to 17:00
-    const standardIn = 8 * 60; // 08:00 in minutes
-    const standardOut = 17 * 60; // 17:00 in minutes
-    
-    const actualIn = inHours * 60 + inMins;
-    const actualOut = outHours * 60 + outMins;
-    
-    if (actualIn < standardIn) {
-        overtime += (standardIn - actualIn) / 60;
-    }
-    
-    if (actualOut > standardOut) {
-        overtime += (actualOut - standardOut) / 60;
+
+    if (shift === 'Day') {
+        // Day Shift: 08:00 to 17:00
+        const stdIn = 8 * 60;   // 08:00 am
+        const stdOut = 17 * 60; // 05:00 pm
+        
+        if (actualIn < stdIn) overtime += (stdIn - actualIn) / 60;
+        if (actualOut > stdOut) overtime += (actualOut - stdOut) / 60;
+    } else if (shift === 'Night') {
+        // Night Shift: 20:00 (8 PM) to 05:00 (5 AM next day)
+        const stdIn = 20 * 60;  // 08:00 pm
+        const stdOut = 5 * 60;   // 05:00 am
+        
+        // Before 8:00 PM
+        if (actualIn < stdIn && actualIn >= 5 * 60) {
+            // Note: If you come at say 4:00 PM (16:00), you are 4 hours earlier than 8:00 PM.
+            // But what if it's 4:00 AM? That's actually before the 5:00 AM out time.
+            // For simplicity, let's assume workers come for night shift in the afternoon/evening.
+            overtime += (stdIn - actualIn) / 60;
+        } else if (actualIn < stdOut) {
+             // This case means you came even before the Previous shift's end? 
+             // Unlikely but let's stick to the prompt's simplicity.
+        }
+        
+        // After 5:00 AM
+        if (actualOut > stdOut && actualOut <= 17 * 60) {
+            overtime += (actualOut - stdOut) / 60;
+        }
     }
     
     return Math.max(0, parseFloat(overtime.toFixed(2)));
@@ -154,11 +174,11 @@ app.get('/api/attendance', async (req, res) => {
 });
 
 app.post('/api/attendance', async (req, res) => {
-    const { employee_id, date, status, in_time, out_time } = req.body;
+    const { employee_id, date, status, in_time, out_time, shift } = req.body;
     
     let overtime_hours = 0;
     if (status === 'P') {
-        overtime_hours = calculateOvertime(in_time, out_time);
+        overtime_hours = calculateOvertime(in_time, out_time, shift);
     }
 
     try {
@@ -172,7 +192,7 @@ app.post('/api/attendance', async (req, res) => {
             },
             { upsert: true, new: true }
         );
-        logAudit('UPDATE_ATTENDANCE', { employee_id, date, status, in_time, out_time, overtime_hours });
+        logAudit('UPDATE_ATTENDANCE', { employee_id, date, status, in_time, out_time, overtime_hours, shift });
         res.json({ success: true, overtime_hours });
     } catch (error) {
         res.status(500).json({ error: error.message });

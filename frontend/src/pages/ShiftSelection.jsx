@@ -37,7 +37,7 @@ const ShiftSelection = () => {
                         >
                             <Moon className="w-16 h-16 text-purple-400 group-hover:scale-110 transition-transform" />
                             <div className="text-2xl font-semibold text-slate-200">Night Shift</div>
-                            <div className="text-sm text-slate-400">Flexible Timing</div>
+                            <div className="text-sm text-slate-400">8:00 PM - 5:00 AM</div>
                         </button>
                     </div>
                 </div>

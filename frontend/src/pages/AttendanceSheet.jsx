@@ -9,6 +9,7 @@ const AttendanceSheet = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentMonth, setCurrentMonth] = useState(format(new Date(), 'yyyy-MM'));
     const [saving, setSaving] = useState(false);
+    const selectedShift = localStorage.getItem('selected_shift') || 'Day';
 
     const todayStr = format(new Date(), 'yyyy-MM-dd');
     
@@ -75,13 +76,15 @@ const AttendanceSheet = () => {
                             date,
                             status: record.status,
                             in_time: record.in_time,
-                            out_time: record.out_time
+                            out_time: record.out_time,
+                            shift: selectedShift
                         }));
                     }
                 });
             });
             await Promise.all(promises);
-            alert('Saved successfully! Overtime has been calculated based on shift timings (08:00 AM - 05:00 PM).');
+            const timingDesc = selectedShift === 'Day' ? '08:00 AM - 05:00 PM' : '08:00 PM - 05:00 AM';
+            alert(`Saved successfully! Overtime calculated based on ${selectedShift} shift timings (${timingDesc}).`);
             // Refresh to show calculated overtime
             const attRes = await axios.get(`https://premium-attendance.onrender.com/api/attendance?month=${currentMonth}`);
             const attMap = {};
@@ -102,7 +105,6 @@ const AttendanceSheet = () => {
         }
     };
 
-    const selectedShift = localStorage.getItem('selected_shift') || 'Day';
     const filteredEmployees = employees.filter(e => 
         e.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
         (e.shift === selectedShift || !e.shift)
@@ -115,7 +117,9 @@ const AttendanceSheet = () => {
                     <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
                         {selectedShift} Shift Attendance
                     </h1>
-                    <p className="text-slate-400 mt-2">Manual time entry for {selectedShift} shift (8 AM - 5 PM standard).</p>
+                    <p className="text-slate-400 mt-2">
+                        Manual time entry for {selectedShift} shift ({selectedShift === 'Day' ? '8 AM - 5 PM' : '8 PM - 5 AM'} standard).
+                    </p>
                 </div>
                 <div className="flex items-center space-x-4">
                     <input 
